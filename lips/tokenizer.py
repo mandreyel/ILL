@@ -1,3 +1,4 @@
+from typing import List
 import re
 
 WHITESPACE_RE = re.compile('\s+')
@@ -23,7 +24,7 @@ class Token:
     def __repr__(self) -> str:
         return self.__str__()
 
-def tokenize(source: str) -> list:
+def tokenize(source: str) -> List[Token]:
     """
     Returns a list of dicts with the keys 'type' and 'value', each representing
     a token in the source.
@@ -71,8 +72,6 @@ def tokenize(source: str) -> list:
                 if not DIGIT_RE.match(char):
                     break
                 value += char
-            # Subtract one because we're going to increment it outside the if.
-            i -= 1
             tokens.append(Token('number', value, line, col))
         elif char == '"':
             prev = ''
@@ -86,7 +85,6 @@ def tokenize(source: str) -> list:
                 value += char
             if i + 1 == len(source) and source[i] != '"':
                 raise TypeError("missing closing double quotes")
-            # Don't decrement i to skip the closing double quote.
             tokens.append(Token('string', value, line, col))
         elif IDENTIFIER_RE1.match(char):
             value = char
@@ -96,9 +94,6 @@ def tokenize(source: str) -> list:
                 if not IDENTIFIER_RE2.match(char):
                     break
                 value += char
-            if len(value) > 1:
-                # Same as above
-                i -= 1
             tokens.append(Token('identifier', value, line, col))
         elif ARITHMETIC_RE.match(char):
             tokens.append(Token('arithmetic', char, line, col))
