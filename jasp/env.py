@@ -6,6 +6,7 @@ class Env:
         self.parent = parent
 
     def define(self, identifier: str, value):
+        # print(f"define {identifier} with value {value}")
         self.sym_table[identifier] = value
 
     def __getitem__(self, identifier: str):
