@@ -5,7 +5,7 @@ WHITESPACE_RE = re.compile('\s+')
 DIGIT_RE = re.compile('[0-9]')
 FLOAT_RE = re.compile('(0|[1-9][0-9]*)\.[0-9]+')
 IDENTIFIER_RE1 = re.compile('[a-z_]')
-IDENTIFIER_RE2 = re.compile('[a-z_0-9]')
+IDENTIFIER_RE2 = re.compile('[a-z_\-0-9]')
 ARITHMETIC_RE = re.compile('[+\-\*/]')
 OPERATOR_RE = re.compile('[=<>]')
 

@@ -73,14 +73,29 @@ def parse_expr(tokens: List[Token]) -> list:
                 else:
                     ast.append(token)
                     del tokens[0]
-            if ast:
-                raise SyntaxError(f"missing ) after column {ast[-1].col} on line {ast[-1].line}")
+            # No closing paren, try to find the last token for better error
+            # reporting.
+            def last_token(expr):
+                if isinstance(expr, Token):
+                    return expr
+                elif expr:
+                    return last_token(expr[-1])
+                return None
+            token = last_token(ast[-1])
+            if token:
+                syntax_error("missing )", token)
             else:
-                raise SyntaxError("missing )")
+                syntax_error("missing )")
         else:
-            raise SyntaxError(f"unexpected ) at line {token.line} and column {token.col}")
+            syntax_error("unexpected )", token)
     else:
         return [token]
+
+def syntax_error(msg, token=None):
+    if token:
+        raise SyntaxError(f"line {token.line} column {token.col}: " + msg)
+    else:
+        raise SyntaxError(msg)
 
 def check_errors(expr: List[Token]):
     if len(expr) == 1:

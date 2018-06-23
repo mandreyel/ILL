@@ -35,6 +35,12 @@ def eq(*args):
             return False
     return True
 
+def _and(*args):
+    return args.count(True) == len(args)
+
+def _or(*args):
+    return True in args
+
 ###############################################################################
 
 global_env = Env({
@@ -45,6 +51,9 @@ global_env = Env({
     '=': eq,
     '<': lambda a, b: a < b,
     '>': lambda a, b: a > b,
+    'and': _and,
+    'or': _or,
+    'print': print,
 })
 
 ###############################################################################
@@ -58,6 +67,8 @@ def interpret_expr(expr, env: Env=global_env):
     # print('[i] curr expr:', expr)
     if not isinstance(expr, list) or len(expr) == 1:
         return interpret_atom(expr, env)
+    elif isinstance(expr[0], list):
+        return interpret_fn_call(expr, env)
     else:
         if expr[0].value == 'if':
             return interpret_if(expr, env)
@@ -70,26 +81,23 @@ def interpret_expr(expr, env: Env=global_env):
 
 ###############################################################################
 
-def interpret_atom(expr, env):
+def interpret_atom(expr, env: Env):
     token = expr[0] if isinstance(expr, list) else expr
     # print('[i] token:', token)
     if token.type in ('number', 'string', 'bool'):
         return token.value
     elif token.type in ('identifier', 'arithmetic', 'operator'):
-        return env[token.value]
+        v = env[token.value]
+        if callable(v) and isinstance(expr, list):
+            return interpret_fn_call(expr, env)
+        return v
     else:
         # This is probably a syntax error. TODO
         pass
 
-def interpret_if(expr, env):
+def interpret_if(expr, env: Env):
     """If "expression": (if cond-expr if-true-expr if-not-expr)"""
     assert len(expr) >= 3, "if expression must have at least (if cond cons)"
-    if len(expr) < 3:
-        # TODO this should be checked by the parser
-        raise SyntaxError(f"invalid if expression at line {expr[0].line} and column {expr[0].col}")
-
-    # Interpret subexpressions.
-    #exprs = [interpret_expr(x, env) for x in expr[1:0]]
     # Skip the `if`.
     exprs = expr[1:]
     cond = interpret_expr(exprs[0], env)
@@ -103,17 +111,49 @@ def interpret_if(expr, env):
     elif false_branch:
         return interpret_expr(false_branch, env)
 
-def interpret_var_binding(expr, env):
+def interpret_var_binding(expr, env: Env):
     """Variable binding: (let name expr)"""
     assert len(expr) == 3, "variable binding must consist of only 3 lexemes"
     (_, name, value) = expr
     env.define(name.value, interpret_expr(value))
 
-def interpret_fn_def(expr, env):
-    """Function definition: (fn identifier (args...) expr)"""
-    pass
+class Function:
+    def __init__(self, name: str, body, params=[], parent_env: Env=global_env):
+        self.name = name
+        self.params = params
+        self.body = body
+        self.env = Env(parent=parent_env)
 
-def interpret_fn_call(expr, env):
+    def __call__(self, *args):
+        if len(self.params) != len(args):
+            raise SyntaxError("function {self.name} expects {len(self.params)} arguments but {len(args)} given")
+        # Populate the function environment with the function arguments so that
+        # they're available when evaluating the function body.
+        # print('[fn] fn *args:', *args)
+        for name, arg in zip(self.params, args):
+            # print("[fn] defining:", name, arg)
+            self.env.define(name, arg)
+        # Evaluate the function body.
+        assert self.body, "function body must not be empty"
+        # print("[fn] evaluating fn body")
+        # Interpret the last expression separately as the value of the last
+        # expresssion is returned.
+        # for expr in self.body[:-1]:
+            # print(f"[fn] evaluating {expr}")
+            # interpret_expr(expr, self.env)
+        return interpret_expr(self.body, self.env)
+
+def interpret_fn_def(expr, env: Env):
+    """Function definition: (fn identifier (params...) expr)"""
+    assert len(expr) == 4, "function definition must consist of 4 pieces"
+    (_, name, params, body) = expr
+    name = name.value
+    params = [token.value for token in params]
+    fn = Function(name=name, params=params, body=body, parent_env=env)
+    env.define(name, fn)
+    return fn
+
+def interpret_fn_call(expr, env: Env):
     """Function call: (fn-identifier args...)"""
     # Evaluate each subexpression first.
     exprs = [interpret_expr(x, env) for x in expr]
