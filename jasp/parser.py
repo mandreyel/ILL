@@ -1,6 +1,6 @@
 from typing import List
 from expr import *
-from tokenizer import Token, CLOSE_PAREN, OPEN_PAREN
+from token import Token, CLOSE_PAREN, OPEN_PAREN
 
 def parse(tokens: List[Token]) -> List[Expr]:
     """

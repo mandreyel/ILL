@@ -73,7 +73,7 @@ def interpret(ast: List[Expr]):
         interpret_expr(expr, global_env)
 
 def interpret_expr(expr: Expr, env: Env=global_env):
-    print('[i] curr expr:', expr)
+    # print('[i] curr expr:', expr)
     # TODO possibly use the visitor pattern here
     if isinstance(expr, AtomExpr):
         return interpret_atom(expr, env)
