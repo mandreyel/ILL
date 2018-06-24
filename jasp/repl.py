@@ -38,7 +38,7 @@ if __name__ == "__main__":
             # try:
             for expr in ast:
                 result = interpreter.interpret_expr(expr)
-                if result: print(result)
+                if result is not None: print(result)
             # except Exception as e:
                 # print("ERROR:", e)
                 # continue

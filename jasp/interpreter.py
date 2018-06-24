@@ -28,17 +28,22 @@ def div(*args):
         raise SyntaxError("division takes only 2 arguments")
     return args[0] / args[1]
 
-def eq(*args):
+def eq(*args) -> bool:
     first = args[0]
     for a in args[1:]:
         if a != first:
             return False
     return True
 
-def _and(*args):
+def _not(*args) -> bool:
+    if len(args) != 1:
+        raise SyntaxError("not takes a single argument")
+    return not args[0]
+
+def _and(*args) -> bool:
     return args.count(True) == len(args)
 
-def _or(*args):
+def _or(*args) -> bool:
     return True in args
 
 def do(*args):
@@ -58,7 +63,10 @@ global_env = Env({
     '/': div,
     '=': eq,
     '<': lambda a, b: a < b,
+    '<=': lambda a, b: a <= b,
     '>': lambda a, b: a > b,
+    '>=': lambda a, b: a >= b,
+    'not': _not,
     'and': _and,
     'or': _or,
     'print': print,
