@@ -1,7 +1,8 @@
 from typing import List
-from tokenizer import Token
+from expr import *
+from tokenizer import Token, CLOSE_PAREN, OPEN_PAREN
 
-def parse(tokens: List[Token]) -> List[List]:
+def parse(tokens: List[Token]) -> List[Expr]:
     """
     Transforms a list of tokens in to a list of expressions representing the
     Abstract Syntax Tree.
@@ -24,80 +25,179 @@ def parse(tokens: List[Token]) -> List[List]:
          Token('number', '3'),
          Token('paren', 'close'),
          Token('paren', 'close')]
-    and the return value is a nested list of lists, each nested list
-    representing a separate expression:
-        [[Token('arithmetic', '+'), Token('number', '3'),
-        Token('number', '4')], [Token('arithmetic', '*'),
-        Token('number', '2'), [Token('arithmetic', '+'),
-        Token('number', '4'), Token('number', '3')]]]
-
-    The grammar:
-        string: "..."
-        number: [1-9][0-9]*
-        identifier: [a-z_0-9]+
-        atom: string|number
-        operator: +,-,*,/,=,<,<=,>,>=
-        expr: atom|identifier|(operator expr+)
-        keyword: if, let, fn
+    and the return value is a list of Expr sbuclass instances:
+        [FnCallExpr(AtomExpr('+'), AtomExpr(3), AtomExpr(3)),
+         FnCallExpr(AtomExpr('*'), AtomExpr(2),
+             FnCallExpr(AtomExpr('+'), AtomExpr(4), AtomExpr(4)))]
     """
     if not tokens:
         raise EOFError("no tokens, nothing to parse")
     ast = []
     while tokens:
-        expr = check_errors(parse_expr(tokens))
+        expr = parse_expr(tokens)
         if not expr:
             break
         ast.append(expr)
     return ast
 
-def parse_expr(tokens: List[Token]) -> list:
+def parse_expr(tokens: List[Token]) -> Expr:
     """
-    Parses a single expression, such as (+ 2 (* 3 4)) or "a string" or 2 or
-    some_symbol
+    Parses and returns a single expression and consumes the tokens representing
+    the expression. If the expression is invalid, a SyntaxError is thrown.
     """
     if not tokens:
         return None
     token = tokens.pop(0)
     if token.type == 'paren':
         if token.value == 'open':
-            ast = []
-            while tokens:
-                token = tokens[0]
-                # print(f"[p] curr token: {token}")
-                if token.type == 'paren':
-                    if token.value == 'close':
-                        del tokens[0]
-                        return ast
-                    else:
-                        ast.append(parse_expr(tokens))
+            token = tokens[0]
+            if token.type == 'identifier':
+                if token.value == 'let':
+                    return parse_let_expr(tokens)
+                elif token.value == 'if':
+                    return parse_if_expr(tokens)
+                elif token.value == 'fn':
+                    return parse_fn_def_expr(tokens)
                 else:
-                    ast.append(token)
-                    del tokens[0]
-            # No closing paren, try to find the last token for better error
-            # reporting.
-            def last_token(expr):
-                if isinstance(expr, Token):
-                    return expr
-                elif expr:
-                    return last_token(expr[-1])
-                return None
-            token = last_token(ast[-1])
-            if token:
-                syntax_error("missing )", token)
+                    return parse_fn_call_expr(tokens)
             else:
-                syntax_error("missing )")
+                return parse_fn_call_expr(tokens)
         else:
-            syntax_error("unexpected )", token)
+            raise syntax_error("unexpected )", token)
+    elif token.type in ('string', 'number', 'bool'):
+        return AtomExpr(token.value, token.line, token.col)
     else:
-        return [token]
+        return RefExpr(token.value, token.line, token.col)
 
-def syntax_error(msg, token=None):
+###############################################################################
+
+def parse_if_expr(tokens: List[Token]) -> IfExpr:
+    """If "expression": (if cond-expr true-branch-expr false-branch-expr)"""
+    assert tokens
+    # Consume 'if' keyword.
+    keywd = tokens.pop(0)
+    if expr_end(tokens):
+        raise syntax_error("if expression must have a condition and at least a true branch", keywd)
+    cond = parse_expr(tokens)
+    if expr_end(tokens):
+        raise syntax_error("if expression must have a true branch", keywd)
+    true_branch = parse_expr(tokens)
+    false_branch = None
+    # A false (else) branch is optional so only parse it if the next token is
+    # not a closing paren.
+    if tokens[0] != CLOSE_PAREN:
+        false_branch = parse_expr(tokens)
+    # Make sure the if expression is terminated.
+    terminate_expr(tokens)
+    return IfExpr(cond, true_branch, false_branch, keywd.line, keywd.col)
+
+def parse_let_expr(tokens: List[Token]) -> LetExpr:
+    """Variable binding: (let name expr)"""
+    assert tokens
+    # Consume 'let' keyword.
+    keywd = tokens.pop(0)
+    if expr_end(tokens):
+        raise syntax_error("incomplete let expression", keywd)
+    name = tokens.pop(0)
+    if name.type != 'identifier':
+        raise syntax_error("variable name must be a valid identifier", name)
+    if expr_end(tokens):
+        raise syntax_error("let expression must have a value", keywd)
+    value = parse_expr(tokens)
+    # Make sure let expression is properly terminated.
+    terminate_expr(tokens)
+    return LetExpr(name.value, value, keywd.line, keywd.col)
+
+def parse_fn_def_expr(tokens: List[Token]) -> FnDefExpr:
+    """
+    Function definition:
+        (fn identifier (params...) expr) or
+        (fn identifier (params...) (exprs...))
+    """
+    assert tokens
+    # Consume 'fn' keyword.
+    keywd = tokens.pop(0)
+    if expr_end(tokens):
+        raise syntax_error("incomplete function definition", keywd)
+    name = tokens.pop(0)
+    if name.type != 'identifier':
+        raise syntax_error("variable name must be an identifier", name)
+    if expr_end(tokens):
+        raise syntax_error("function definition must have a parameter list", keywd)
+
+    # Paremeter list
+    open_paren = tokens.pop(0)
+    if open_paren != OPEN_PAREN:
+        raise syntax_error("missing function parameter list", open_paren)
+    if expr_end(tokens):
+        raise syntax_error("function definition must have a parameter list (may be empty)", open_paren)
+    if CLOSE_PAREN not in tokens:
+        raise syntax_error("unterminated function parameter list", open_paren)
+    close_paren_idx = tokens.index(CLOSE_PAREN)
+    params = []
+    for i in range(close_paren_idx):
+        param = tokens.pop(0)
+        if param.type != 'identifier':
+            raise syntax_error("function parameter must be a valid identifier", param)
+        params.append(param.value)
+    # Consume closing paren.
+    terminate_expr(tokens)
+
+    # Function body
+    body_exprs = []
+    if expr_end(tokens):
+        raise syntax_error("function must have a function body", keywd)
+    elif tokens[0].type != 'paren':
+        # The function body is a single lexeme such as an atom or a reference.
+        expr = parse_expr(tokens)
+        body_exprs.append(expr)
+    elif tokens[0] == OPEN_PAREN:
+        # TODO
+        # The function body may be a single expression such as (+ 1 2) or
+        # multiple expressions wrapped in an additional pair of parens, such as
+        # ((let tmp 5) (+ tmp 2)), which is *not* the same as a function call.
+        # The issue is that this is somewhat difficult to detect in that the
+        # body may be a single expression that looks like the above, such as
+        # ((fn ident (i) i) (+ 2 fn-arg)).
+        body_exprs.append(parse_expr(tokens))
+        # while tokens[0] != CLOSE_PAREN:
+            # expr = parse_expr(tokens)
+            # body_exprs.append(expr)
+    else: assert False, "[parse_fn_def_expr] execution must not get here"
+
+    # Make sure the function definition is terminated.
+    terminate_expr(tokens)
+    return FnDefExpr(name.value, params, body_exprs, keywd.line, keywd.col)
+
+def parse_fn_call_expr(tokens: List[Token]) -> FnCallExpr:
+    """Function call: (fn-identifier args...)"""
+    assert tokens
+    line, col = tokens[0].line, tokens[0].col
+    fn_expr = parse_expr(tokens)
+    args = []
+    while not expr_end(tokens):
+        expr = parse_expr(tokens)
+        args.append(expr)
+    if not tokens:
+        raise syntax_error("missing ')'", Token(None, None, line, col))
+    # Make sure the function call expression is terminated.
+    terminate_expr(tokens)
+    return FnCallExpr(fn_expr, args, line, col)
+
+###############################################################################
+
+def expr_end(tokens) -> bool:
+    return not tokens or tokens[0] == CLOSE_PAREN
+
+def terminate_expr(tokens: List[Token]):
+    if not tokens:
+        raise syntax_error("missing ')'")
+    elif tokens[0] != CLOSE_PAREN:
+        raise syntax_error("missing ')'", tokens[0])
+    tokens.pop(0)
+
+def syntax_error(msg, token=None) -> SyntaxError:
     if token:
-        raise SyntaxError(f"line {token.line} column {token.col}: " + msg)
+        return SyntaxError(f"line {token.line} column {token.col}: " + msg)
     else:
-        raise SyntaxError(msg)
-
-def check_errors(expr: List[Token]):
-    if len(expr) == 1:
-        return expr
-    return expr
+        return SyntaxError(msg)

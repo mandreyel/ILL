@@ -1,5 +1,5 @@
 from typing import List
-from tokenizer import Token
+from expr import *
 from env import Env
 
 # Builtins
@@ -58,67 +58,51 @@ global_env = Env({
 
 ###############################################################################
 
-def interpret(ast: list):
+def interpret(ast: List[Expr]):
     """Interprets the AST which is a list of expressions."""
     for expr in ast:
         interpret_expr(expr, global_env)
 
-def interpret_expr(expr, env: Env=global_env):
+def interpret_expr(expr: Expr, env: Env=global_env):
     # print('[i] curr expr:', expr)
-    if not isinstance(expr, list) or len(expr) == 1:
+    # TODO possibly use the visitor pattern here
+    if isinstance(expr, AtomExpr):
         return interpret_atom(expr, env)
-    elif isinstance(expr[0], list):
+    elif isinstance(expr, RefExpr):
+        return interpret_ref(expr, env)
+    elif isinstance(expr, IfExpr):
+        return interpret_if(expr, env)
+    elif isinstance(expr, LetExpr):
+        return interpret_let(expr, env)
+    elif isinstance(expr, FnDefExpr):
+        return interpret_fn_def(expr, env)
+    elif isinstance(expr, FnCallExpr):
         return interpret_fn_call(expr, env)
     else:
-        if expr[0].value == 'if':
-            return interpret_if(expr, env)
-        elif expr[0].value == 'let':
-            return interpret_var_binding(expr, env)
-        elif expr[0].value == 'fn':
-            return interpret_fn_def(expr, env)
-        else:
-            return interpret_fn_call(expr, env)
+        raise TypeError("unknown type")
 
 ###############################################################################
 
-def interpret_atom(expr, env: Env):
-    token = expr[0] if isinstance(expr, list) else expr
-    # print('[i] token:', token)
-    if token.type in ('number', 'string', 'bool'):
-        return token.value
-    elif token.type in ('identifier', 'arithmetic', 'operator'):
-        v = env[token.value]
-        if callable(v) and isinstance(expr, list):
-            return interpret_fn_call(expr, env)
-        return v
-    else:
-        # This is probably a syntax error. TODO
-        pass
+def interpret_atom(expr: AtomExpr, env: Env): return expr.value
 
-def interpret_if(expr, env: Env):
-    """If "expression": (if cond-expr if-true-expr if-not-expr)"""
-    assert len(expr) >= 3, "if expression must have at least (if cond cons)"
-    # Skip the `if`.
-    exprs = expr[1:]
-    cond = interpret_expr(exprs[0], env)
-    if not isinstance(cond, bool):
-        raise RuntimeError(f"if condition at line {expr[0].line} and column {expr[0].col} needs to evaluate to a bool")
+def interpret_ref(expr: RefExpr, env: Env): return env[expr.name]
 
-    true_branch = exprs[1]
-    false_branch = exprs[2] if len(exprs) > 2 else None
+def interpret_if(expr: IfExpr, env: Env):
+    """If "expression": (if cond-expr true-branch-expr false-branch-expr)"""
+    cond = interpret_expr(expr.cond, env)
     if cond:
-        return interpret_expr(true_branch, env)
-    elif false_branch:
-        return interpret_expr(false_branch, env)
+        return interpret_expr(expr.true_branch, env)
+    elif expr.false_branch:
+        return interpret_expr(expr.false_branch, env)
 
-def interpret_var_binding(expr, env: Env):
+def interpret_let(expr: LetExpr, env: Env):
     """Variable binding: (let name expr)"""
-    assert len(expr) == 3, "variable binding must consist of only 3 lexemes"
-    (_, name, value) = expr
-    env.define(name.value, interpret_expr(value))
+    env.define(expr.name, interpret_expr(expr.value, env))
+    return env[expr.name]
 
 class Function:
-    def __init__(self, name: str, body, params=[], parent_env: Env=global_env):
+    def __init__(self, name: str, body: List[Expr], params: List[str]=[],
+            parent_env: Env=global_env):
         self.name = name
         self.params = params
         self.body = body
@@ -134,28 +118,27 @@ class Function:
             # print("[fn] defining:", name, arg)
             self.env.define(name, arg)
         # Evaluate the function body.
-        assert self.body, "function body must not be empty"
-        # print("[fn] evaluating fn body")
+        assert self.body
+        for expr in self.body[:-1]:
+            interpret_expr(expr, self.env)
         # Interpret the last expression separately as the value of the last
         # expresssion is returned.
-        # for expr in self.body[:-1]:
-            # print(f"[fn] evaluating {expr}")
-            # interpret_expr(expr, self.env)
-        return interpret_expr(self.body, self.env)
+        return interpret_expr(self.body[-1], self.env)
 
-def interpret_fn_def(expr, env: Env):
+def interpret_fn_def(expr: FnDefExpr, env: Env):
     """Function definition: (fn identifier (params...) expr)"""
-    assert len(expr) == 4, "function definition must consist of 4 pieces"
-    (_, name, params, body) = expr
-    name = name.value
-    params = [token.value for token in params]
-    fn = Function(name=name, params=params, body=body, parent_env=env)
-    env.define(name, fn)
+    fn = Function(name=expr.name, params=expr.params, body=expr.body, parent_env=env)
+    env.define(expr.name, fn)
     return fn
 
-def interpret_fn_call(expr, env: Env):
+def interpret_fn_call(expr: FnCallExpr, env: Env):
     """Function call: (fn-identifier args...)"""
     # Evaluate each subexpression first.
-    exprs = [interpret_expr(x, env) for x in expr]
-    fn = exprs.pop(0)
-    return fn(*exprs)
+    fn = interpret_expr(expr.fn, env)
+    # Since e.g. ((fn anon (a) (+ 2 a)) 5) is a valid expression, the first
+    # element may not be an identifier bound to a function in env but a function
+    # object, so we need to check if fn is a string or something else.
+    if isinstance(fn, str):
+        fn = env[fn]
+    args = [interpret_expr(x, env) for x in expr.args]
+    return fn(*args)

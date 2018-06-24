@@ -22,14 +22,18 @@ if __name__ == "__main__":
             except TypeError as e:
                 print("ERROR:", e)
                 continue
+
             # print('tokens:', tokens)
 
-            try:
-                ast = parser.parse(tokens)
-            except (TypeError,SyntaxError) as e:
-                print("ERROR:", e)
-                continue
-            print('ast:', ast)
+            ast = parser.parse(tokens)
+
+            # try:
+                # ast = parser.parse(tokens)
+            # except (TypeError,SyntaxError) as e:
+                # print("ERROR:", e)
+                # continue
+
+            # print('ast:', ast)
 
             # try:
             for expr in ast:
