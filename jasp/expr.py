@@ -15,11 +15,17 @@ class AtomExpr(Expr):
         super().__init__(line, col)
         self.value = value
 
+    def __repr__(self) -> str:
+        return f"Atom({self.value})"
+
 class RefExpr(Expr):
     """An expression that references a variable."""
     def __init__(self, name: str, line: int=None, col: int=None):
         super().__init__(line, col)
         self.name = name
+
+    def __repr__(self) -> str:
+        return f"Ref({self.name})"
 
 class IfExpr(Expr):
     def __init__(self, cond: Expr, true_branch: Expr, false_branch: Expr, line:
@@ -29,11 +35,20 @@ class IfExpr(Expr):
         self.true_branch = true_branch
         self.false_branch = false_branch
 
+    def __repr__(self) -> str:
+        if self.false_branch:
+            return f"If(cond: {self.cond} then: {self.true_branch} else: {self.false_branch})"
+        else:
+            return f"If(cond: {self.cond} then: {self.true_branch})"
+
 class LetExpr(Expr):
     def __init__(self, name: str, value: Expr, line: int=None, col: int=None):
         super().__init__(line, col)
         self.name = name
         self.value = value
+
+    def __repr__(self) -> str:
+        return f"Let(name: {self.name} value: {self.value})"
 
 class FnDefExpr(Expr):
     def __init__(self, name: str, params: List[str], body: List[Expr], line:
@@ -43,8 +58,14 @@ class FnDefExpr(Expr):
         self.params = params
         self.body = body
 
+    def __repr__(self) -> str:
+        return f"FnDef(name: {self.name} params: {self.params} body: {self.body})"
+
 class FnCallExpr(Expr):
     def __init__(self, fn: Expr, args: List[Expr], line: int=None, col: int=None):
         super().__init__(line, col)
         self.fn = fn
         self.args = args
+
+    def __repr__(self) -> str:
+        return f"FnCall(fn: {self.fn} args: {self.args})"

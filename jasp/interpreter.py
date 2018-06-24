@@ -41,6 +41,14 @@ def _and(*args):
 def _or(*args):
     return True in args
 
+def do(*args):
+    """
+    This is used for when one wants more than a single expression in an if
+    branch or a function body. The values of a list of evaluated expressions are
+    passed to do and the last value is returned.
+    """
+    return args[-1]
+
 ###############################################################################
 
 global_env = Env({
@@ -54,6 +62,7 @@ global_env = Env({
     'and': _and,
     'or': _or,
     'print': print,
+    'do': do,
 })
 
 ###############################################################################
@@ -64,7 +73,7 @@ def interpret(ast: List[Expr]):
         interpret_expr(expr, global_env)
 
 def interpret_expr(expr: Expr, env: Env=global_env):
-    # print('[i] curr expr:', expr)
+    print('[i] curr expr:', expr)
     # TODO possibly use the visitor pattern here
     if isinstance(expr, AtomExpr):
         return interpret_atom(expr, env)
@@ -118,9 +127,9 @@ class Function:
             # print("[fn] defining:", name, arg)
             self.env.define(name, arg)
         # Evaluate the function body.
-        assert self.body
-        for expr in self.body[:-1]:
-            interpret_expr(expr, self.env)
+        # assert self.body
+        # for expr in self.body[:-1]:
+            # interpret_expr(expr, self.env)
         # Interpret the last expression separately as the value of the last
         # expresssion is returned.
         return interpret_expr(self.body[-1], self.env)

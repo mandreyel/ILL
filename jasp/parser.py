@@ -147,23 +147,7 @@ def parse_fn_def_expr(tokens: List[Token]) -> FnDefExpr:
     body_exprs = []
     if expr_end(tokens):
         raise syntax_error("function must have a function body", keywd)
-    elif tokens[0].type != 'paren':
-        # The function body is a single lexeme such as an atom or a reference.
-        expr = parse_expr(tokens)
-        body_exprs.append(expr)
-    elif tokens[0] == OPEN_PAREN:
-        # TODO
-        # The function body may be a single expression such as (+ 1 2) or
-        # multiple expressions wrapped in an additional pair of parens, such as
-        # ((let tmp 5) (+ tmp 2)), which is *not* the same as a function call.
-        # The issue is that this is somewhat difficult to detect in that the
-        # body may be a single expression that looks like the above, such as
-        # ((fn ident (i) i) (+ 2 fn-arg)).
-        body_exprs.append(parse_expr(tokens))
-        # while tokens[0] != CLOSE_PAREN:
-            # expr = parse_expr(tokens)
-            # body_exprs.append(expr)
-    else: assert False, "[parse_fn_def_expr] execution must not get here"
+    body_exprs.append(parse_expr(tokens))
 
     # Make sure the function definition is terminated.
     terminate_expr(tokens)

@@ -33,7 +33,7 @@ if __name__ == "__main__":
                 # print("ERROR:", e)
                 # continue
 
-            # print('ast:', ast)
+            print('ast:', ast)
 
             # try:
             for expr in ast:
