@@ -165,6 +165,9 @@ class Function:
             raise SyntaxError("function {self.name} expects {len(self.params)} arguments but {len(args)} given")
         # Populate the function environment with the function arguments so that
         # they're available when evaluating the function body.
+        # NOTE: it is crucial that the environment (or at least its symbol
+        # table) be reacreated from scratch as otherwise we're going to pollute
+        # the entire callstack of the function if it's invoked recursively.
         env = Env(sym_table={name: arg for name, arg in zip(self.params, args)}, parent=parent_env)
         # Evaluate the function body.
         return interpret_expr(self.body, env)

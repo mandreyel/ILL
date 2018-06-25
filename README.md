@@ -53,7 +53,7 @@ constructs anyway), a while keyword is provided:
 (let i 0)
 (while (< i 10)
     (do (print i)
-        (+ i 1)))
+        (let i (+ i 1))))
 ```
 
 Looping through collection elements is also supported:
