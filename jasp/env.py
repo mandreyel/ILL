@@ -4,7 +4,8 @@ class Env:
         self.parent = parent
 
     def define(self, identifier: str, value):
-        self.sym_table[identifier] = value
+        cpy = value
+        self.sym_table[identifier] = cpy
 
     def __getitem__(self, identifier: str):
         if identifier in self.sym_table:

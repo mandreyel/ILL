@@ -99,9 +99,11 @@ def interpret_expr(expr: Expr, env: Env=global_env):
 
 ###############################################################################
 
-def interpret_atom(expr: AtomExpr, env: Env): return expr.value
+def interpret_atom(expr: AtomExpr, env: Env):
+    return expr.value
 
-def interpret_ref(expr: RefExpr, env: Env): return env[expr.name]
+def interpret_ref(expr: RefExpr, env: Env):
+    return env[expr.name]
 
 def interpret_if(expr: IfExpr, env: Env):
     """If "expression": (if cond-expr true-branch-expr false-branch-expr)"""
@@ -117,28 +119,23 @@ def interpret_let(expr: LetExpr, env: Env):
     return env[expr.name]
 
 class Function:
-    def __init__(self, name: str, body: List[Expr], params: List[str]=[],
-            parent_env: Env=global_env):
+    def __init__(self, name: str, body: List[Expr], params: List[str]=[]):
         self.name = name
         self.params = params
         self.body = body
-        self.env = Env(parent=parent_env)
 
-    def __call__(self, *args):
+    def __call__(self, parent_env: Env, *args):
         if len(self.params) != len(args):
             raise SyntaxError("function {self.name} expects {len(self.params)} arguments but {len(args)} given")
         # Populate the function environment with the function arguments so that
         # they're available when evaluating the function body.
-        # print('[fn] fn *args:', *args)
-        for name, arg in zip(self.params, args):
-            # print("[fn] defining:", name, arg)
-            self.env.define(name, arg)
+        env = Env(sym_table={name: arg for name, arg in zip(self.params, args)}, parent=parent_env)
         # Evaluate the function body.
-        return interpret_expr(self.body, self.env)
+        return interpret_expr(self.body, env)
 
 def interpret_fn_def(expr: FnDefExpr, env: Env):
     """Function definition: (fn identifier (params...) expr)"""
-    fn = Function(name=expr.name, params=expr.params, body=expr.body, parent_env=env)
+    fn = Function(name=expr.name, params=expr.params, body=expr.body)
     env.define(expr.name, fn)
     return fn
 
@@ -146,10 +143,12 @@ def interpret_fn_call(expr: FnCallExpr, env: Env):
     """Function call: (fn-identifier args...)"""
     # Evaluate each subexpression first.
     fn = interpret_expr(expr.fn, env)
+    args = [interpret_expr(x, env) for x in expr.args]
     # Since e.g. ((fn anon (a) (+ 2 a)) 5) is a valid expression, the first
     # element may not be an identifier bound to a function in env but a function
     # object, so we need to check if fn is a string or something else.
-    if isinstance(fn, str):
-        fn = env[fn]
-    args = [interpret_expr(x, env) for x in expr.args]
-    return fn(*args)
+    assert callable(fn)
+    if isinstance(fn, Function):
+        return fn(env, *args)
+    else:
+        return fn(*args)

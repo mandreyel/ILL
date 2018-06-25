@@ -25,23 +25,21 @@ if __name__ == "__main__":
 
             # print('tokens:', tokens)
 
-            ast = parser.parse(tokens)
-
-            # try:
-                # ast = parser.parse(tokens)
-            # except (TypeError,SyntaxError) as e:
-                # print("ERROR:", e)
-                # continue
+            try:
+                ast = parser.parse(tokens)
+            except (TypeError,SyntaxError) as e:
+                print("ERROR:", e)
+                continue
 
             print('ast:', ast)
 
-            # try:
-            for expr in ast:
-                result = interpreter.interpret_expr(expr)
-                if result is not None: print(result)
-            # except Exception as e:
-                # print("ERROR:", e)
-                # continue
+            try:
+                for expr in ast:
+                    result = interpreter.interpret_expr(expr)
+                    if result is not None: print(result)
+            except Exception as e:
+                print("ERROR:", e)
+                continue
     except (KeyboardInterrupt, EOFError):
         print()
     print("Bye!")
