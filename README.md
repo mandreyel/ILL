@@ -62,6 +62,14 @@ Looping through collection elements is also supported:
 (each (list element)
     (print element))
 ```
+or if the iterable is a map:
+```
+(let answers {
+    "The Answer to the Ultimate Question of Life, the Universe, and Everything": 42})
+(each (answers key val)
+    (print key ": " val))
+```
+
 
 You can also use multiple statements within if branches and function bodies with the `do` function, which evaluates all
 its arguments and returns the last one:

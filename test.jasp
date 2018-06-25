@@ -1,0 +1,30 @@
+(fn fib (n)
+    (if (<= n 2)
+        1
+        (+ (fib (- n 1)) (fib (- n 2)))))
+
+(print "hello world")
+(print "hello again")
+(print (+ 2 3 4))
+(print "(fib 5)" (fib 5))
+
+(print)
+(print "loop over list")
+(let i 0)
+(while (< i 6)
+    (do (print i)
+        (let i (+ i 1))))
+
+(print)
+(print "iterate over list")
+(let list [1 2 3 4])
+(each (list elem)
+    (print elem))
+
+(print)
+(print "iterate over map")
+(let map {
+    "key": "value"
+    "answer": 42})
+(each (map key val)
+    (print key ":" val))

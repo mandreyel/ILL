@@ -96,6 +96,8 @@ def interpret_expr(expr: Expr, env: Env=global_env):
         return interpret_if(expr, env)
     elif isinstance(expr, WhileExpr):
         return interpret_while(expr, env)
+    elif isinstance(expr, EachExpr):
+        return interpret_each(expr, env)
     elif isinstance(expr, FnDefExpr):
         return interpret_fn_def(expr, env)
     elif isinstance(expr, FnCallExpr):
@@ -128,6 +130,23 @@ def interpret_while(expr: WhileExpr, env: Env):
         if not cond:
             break
         ret = interpret_expr(expr.body, env)
+    return ret
+
+def interpret_each(expr: EachExpr, env: Env):
+    ret = None
+    each_env = Env(sym_table={expr.elem_name: None}, parent=env)
+    coll = interpret_expr(expr.coll)
+    if isinstance(coll, list):
+        for elem in coll:
+            each_env.define(expr.elem_name, elem)
+            ret = interpret_expr(expr.body, each_env)
+    else:
+        assert isinstance(coll, dict)
+        for key, val in coll.items():
+            key_name, val_name = expr.elem_name
+            each_env.define(key_name, key)
+            each_env.define(val_name, val)
+            ret = interpret_expr(expr.body, each_env)
     return ret
 
 def interpret_let(expr: LetExpr, env: Env):

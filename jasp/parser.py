@@ -58,6 +58,8 @@ def parse_expr(tokens: List[Token]) -> Expr:
                     return parse_if_expr(tokens)
                 elif token.value == 'while':
                     return parse_while_expr(tokens)
+                elif token.value == 'each':
+                    return parse_each_expr(tokens)
                 elif token.value == 'fn':
                     return parse_fn_def_expr(tokens)
                 else:
@@ -136,6 +138,43 @@ def parse_while_expr(tokens: List[Token]) -> WhileExpr:
     body = parse_expr(tokens)
     terminate_expr(tokens)
     return WhileExpr(cond, body, keywd.line, keywd.col)
+
+def parse_each_expr(tokens: List[Token]) -> EachExpr:
+    assert tokens
+    # Consume 'each' keyword.
+    keywd = tokens.pop(0)
+    if expr_end(tokens):
+        raise syntax_error("each expression must have a collection header and a body", keywd)
+
+    # Each "iteration header"
+    open_paren = tokens.pop(0)
+    if open_paren != OPEN_PAREN:
+        raise syntax_error("each expression must have a non empty iteration header", open_paren)
+    elif expr_end(tokens):
+        raise syntax_error("each expression must have a non empty iteration header", open_paren)
+    collection = parse_expr(tokens)
+    if not isinstance(collection, (CollectionExpr, RefExpr, FnCallExpr)):
+        raise syntax_error("first element of an each expression iteration header must be a collection", open_paren)
+    elif expr_end(tokens):
+        raise syntax_error("incomplete each expression", open_paren)
+    element = tokens.pop(0)
+    if not element.type == 'identifier':
+        raise syntax_error("the second element of an each expression iteration header must be valid identifier denoting the current element in the iteration", element)
+    element = element.value
+    # The collection may be a map in which case another identifier for the map
+    # values is necessary.
+    if tokens[0].type == 'identifier':
+        element = (element, tokens.pop(0).value)
+    # Consume closing paren.
+    terminate_expr(tokens)
+
+    # Each body
+    if expr_end(tokens):
+        raise syntax_error("each expression must have a body", keywd)
+    body = parse_expr(tokens)
+    # Consume closing paren.
+    terminate_expr(tokens)
+    return EachExpr(collection, element, body, keywd.line, keywd.col)
 
 def parse_fn_def_expr(tokens: List[Token]) -> FnDefExpr:
     """
