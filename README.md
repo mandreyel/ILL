@@ -54,3 +54,7 @@ its arguments and returns the last one:
     (do (let tmp param1)
         (+ tmp param1)))
 ```
+
+## Running it
+
+Just execute `./jasp/repl.py` for a repl and `./jasp/jasp.py` to run source code.
