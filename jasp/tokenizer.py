@@ -23,14 +23,16 @@ def tokenize(source: str) -> List[Token]:
     a token in the source.
 
     The possible token types are: 
-        - paren: (,)
-        - number: 0|[1-9][0-9]* # TODO add float support
+        - paren: ( )
+        - square-paren: [ ]
+        - bracket: { }
+        - colon: :
+        - number: 0|[1-9][0-9]*(.[0-9]+)* # TODO add float support
         - string: anything enclosed in double quotes, including escaped double quotes (\") 
-        - vector: [elements...]
-        - bool: true,false
+        - bool: true false
         - identifier: [a-z_][a-z_0-9]*
-        - arithmetic: +,-,*,/
-        - operator: =,<,<=,>,>= (negation is done with the not keyword)
+        - arithmetic: + - * /
+        - operator: = < <= > >= (negation is done with the not keyword)
         - comment: ;anything here
         - EOF: indicates end of file
 
@@ -55,9 +57,15 @@ def tokenize(source: str) -> List[Token]:
         elif char == ')':
             tokens.append(Token('paren', 'close', line, col))
         elif char == '[':
-            tokens.append(Token('square-paren', 'open'))
+            tokens.append(Token('square-paren', 'open', line, col))
         elif char == ']':
-            tokens.append(Token('square-paren', 'close'))
+            tokens.append(Token('square-paren', 'close', line, col))
+        elif char == '{':
+            tokens.append(Token('bracket', 'open', line, col))
+        elif char == '}':
+            tokens.append(Token('bracket', 'close', line, col))
+        elif char == ':':
+            tokens.append(Token('colon', ':', line, col))
         elif WHITESPACE_RE.search(char):
             pass
         elif char == '0':

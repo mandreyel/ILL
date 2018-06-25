@@ -96,6 +96,8 @@ def interpret_expr(expr: Expr, env: Env=global_env):
         return interpret_fn_call(expr, env)
     elif isinstance(expr, VectorExpr):
         return interpret_vector(expr, env)
+    elif isinstance(expr, MapExpr):
+        return interpret_map(expr, env)
     else:
         raise TypeError("unknown type")
 
@@ -157,3 +159,6 @@ def interpret_fn_call(expr: FnCallExpr, env: Env):
 
 def interpret_vector(expr: VectorExpr, env: Env) -> list:
     return [interpret_expr(expr, env) for expr in expr.exprs]
+
+def interpret_map(expr: MapExpr, env: Env) -> dict:
+    return {interpret_expr(key, env):interpret_expr(val, env) for key, val in expr.expr_dict.items()}

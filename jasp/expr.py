@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Dict
 
 class Expr:
     "Abstract base for all expressions."
@@ -17,6 +17,22 @@ class AtomExpr(Expr):
 
     def __repr__(self) -> str:
         return f"Atom({self.value})"
+
+class VectorExpr(Expr):
+    def __init__(self, exprs: List[Expr], line: int=None, col: int=None):
+        super().__init__(line, col)
+        self.exprs = exprs
+
+    def __repr__(self) -> str:
+        return f"Vector({self.exprs})"
+
+class MapExpr(Expr):
+    def __init__(self, expr_dict: Dict[Expr, Expr], line: int=None, col: int=None):
+        super().__init__(line, col)
+        self.expr_dict = expr_dict
+
+    def __repr__(self) -> str:
+        return f"Map({self.expr_dict})"
 
 class RefExpr(Expr):
     """An expression that references a variable."""
@@ -69,12 +85,3 @@ class FnCallExpr(Expr):
 
     def __repr__(self) -> str:
         return f"FnCall(fn: {self.fn} args: {self.args})"
-
-class VectorExpr(Expr):
-    def __init__(self, exprs: List[Expr], line: int=None, col: int=None):
-        super().__init__(line, col)
-        self.exprs = exprs
-
-    def __repr__(self) -> str:
-        return f"Vector({self.exprs})"
-

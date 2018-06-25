@@ -17,14 +17,19 @@ The basics are just as you'd expect:
 (+ 1 (* 2 3))
 ```
 
+Types:
+- bool: `true` or `false`
+- number: `2` or `2.02`
+- string: `"a utf8 string"`
+- vector: `[1 2 3 "four"]`
+- map: `{"key": "value"}`
+
 Variable binding:
 ```
+(let greeting "hello world")
 (let name (/ 8 2))
-```
-
-Lists (or vectors):
-```
 (let vec [1 23 (+ 2 34) (+ "hello" "world")])
+(let map {"key1":1 2:2 (+ 2 3):3})
 ```
 
 Conditional branching:

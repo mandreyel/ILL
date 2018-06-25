@@ -68,7 +68,12 @@ def parse_expr(tokens: List[Token]) -> Expr:
         if token.value == 'open':
             return parse_vector_expr(tokens)
         else:
-            raise syntax_error("unexpected [", token)
+            raise syntax_error("unexpected ]", token)
+    elif token.type == 'bracket':
+        if token.value == 'open':
+            return parse_map_expr(tokens)
+        else:
+            raise syntax_error("unexpected }", token)
     elif token.type in ('string', 'number', 'bool'):
         return AtomExpr(token.value, token.line, token.col)
     else:
@@ -175,25 +180,39 @@ def parse_fn_call_expr(tokens: List[Token]) -> FnCallExpr:
 def parse_vector_expr(tokens: List[Token]) -> VectorExpr:
     exprs = []
     line, col = tokens[0].line, tokens[0].col
-    while tokens and tokens[0] != Token('square-paren', 'close'):
+    CLOSE_SQUARE_PAREN = Token('square-paren', 'close')
+    while not expr_end(tokens, CLOSE_SQUARE_PAREN):
         exprs.append(parse_expr(tokens))
-    if not tokens:
-        raise syntax_error("missing ']'")
-    elif tokens[0] != Token('square-paren', 'close'):
-        raise syntax_error("missing ']'", tokens[0])
-    tokens.pop(0)
+    terminate_expr(tokens, CLOSE_SQUARE_PAREN, ']')
     return VectorExpr(exprs, line, col)
+
+def parse_map_expr(tokens: List[Token]) -> MapExpr:
+    exprs = {}
+    line, col = tokens[0].line, tokens[0].col
+    CLOSE_BRACKET = Token('bracket', 'close')
+    while not expr_end(tokens, CLOSE_BRACKET):
+        key = parse_expr(tokens)
+        if expr_end(tokens, CLOSE_BRACKET):
+            raise syntax_error("map key must have a colon and a value", key)
+        if not tokens[0] == Token('colon', ':'):
+            raise syntax_error("no colon between key and value in map", key)
+        tokens.pop(0)
+        if expr_end(tokens, CLOSE_BRACKET):
+            raise syntax_error("map key must have a value", key)
+        exprs[key] = parse_expr(tokens)
+    terminate_expr(tokens, CLOSE_BRACKET, '}')
+    return MapExpr(exprs, line, col)
 
 ###############################################################################
 
-def expr_end(tokens) -> bool:
-    return not tokens or tokens[0] == CLOSE_PAREN
+def expr_end(tokens, expr_terminator=CLOSE_PAREN) -> bool:
+    return not tokens or tokens[0] == expr_terminator
 
-def terminate_expr(tokens: List[Token]):
+def terminate_expr(tokens: List[Token], expr_terminator=CLOSE_PAREN, symbol=')'):
     if not tokens:
-        raise syntax_error("missing ')'")
-    elif tokens[0] != CLOSE_PAREN:
-        raise syntax_error("missing ')'", tokens[0])
+        raise syntax_error(f"missing '{symbol}'")
+    elif tokens[0] != expr_terminator:
+        raise syntax_error(f"missing '{symbol}'", tokens[0])
     tokens.pop(0)
 
 def syntax_error(msg, token=None) -> SyntaxError:

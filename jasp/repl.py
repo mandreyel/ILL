@@ -33,13 +33,17 @@ if __name__ == "__main__":
 
             print('ast:', ast)
 
-            try:
-                for expr in ast:
-                    result = interpreter.interpret_expr(expr)
-                    if result is not None: print(result)
-            except Exception as e:
-                print("ERROR:", e)
-                continue
+            for expr in ast:
+                result = interpreter.interpret_expr(expr)
+                if result is not None: print(result)
+
+            # try:
+                # for expr in ast:
+                    # result = interpreter.interpret_expr(expr)
+                    # if result is not None: print(result)
+            # except Exception as e:
+                # print("ERROR:", e)
+                # continue
     except (KeyboardInterrupt, EOFError):
         print()
     print("Bye!")
