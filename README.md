@@ -22,6 +22,11 @@ Variable binding:
 (let name (/ 8 2))
 ```
 
+Lists (or vectors):
+```
+(let vec [1 23 (+ 2 34) (+ "hello" "world")])
+```
+
 Conditional branching:
 ```
 (if (= 2 2 2)

@@ -64,6 +64,11 @@ def parse_expr(tokens: List[Token]) -> Expr:
                 return parse_fn_call_expr(tokens)
         else:
             raise syntax_error("unexpected )", token)
+    elif token.type == 'square-paren':
+        if token.value == 'open':
+            return parse_vector_expr(tokens)
+        else:
+            raise syntax_error("unexpected [", token)
     elif token.type in ('string', 'number', 'bool'):
         return AtomExpr(token.value, token.line, token.col)
     else:
@@ -166,6 +171,18 @@ def parse_fn_call_expr(tokens: List[Token]) -> FnCallExpr:
     # Make sure the function call expression is terminated.
     terminate_expr(tokens)
     return FnCallExpr(fn_expr, args, line, col)
+
+def parse_vector_expr(tokens: List[Token]) -> VectorExpr:
+    exprs = []
+    line, col = tokens[0].line, tokens[0].col
+    while tokens and tokens[0] != Token('square-paren', 'close'):
+        exprs.append(parse_expr(tokens))
+    if not tokens:
+        raise syntax_error("missing ']'")
+    elif tokens[0] != Token('square-paren', 'close'):
+        raise syntax_error("missing ']'", tokens[0])
+    tokens.pop(0)
+    return VectorExpr(exprs, line, col)
 
 ###############################################################################
 

@@ -10,6 +10,13 @@ IDENTIFIER_RE2 = re.compile('[a-z_\-0-9]')
 ARITHMETIC_RE = re.compile('[+\-\*/]')
 OPERATOR_RE = re.compile('[=<>]')
 
+# class Tokenizer:
+    # def __init__(self, source: str):
+        # self.source = source
+        # self.pos = 0
+        # self.line = 1
+        # self.col = 1
+
 def tokenize(source: str) -> List[Token]:
     """
     Returns a list of dicts with the keys 'type' and 'value', each representing
@@ -19,10 +26,12 @@ def tokenize(source: str) -> List[Token]:
         - paren: (,)
         - number: 0|[1-9][0-9]* # TODO add float support
         - string: anything enclosed in double quotes, including escaped double quotes (\") 
+        - vector: [elements...]
         - bool: true,false
         - identifier: [a-z_][a-z_0-9]*
         - arithmetic: +,-,*,/
         - operator: =,<,<=,>,>= (negation is done with the not keyword)
+        - comment: ;anything here
         - EOF: indicates end of file
 
     E.g. for the input `(+ 3 243)`, the following structure is returned:
@@ -45,6 +54,10 @@ def tokenize(source: str) -> List[Token]:
             tokens.append(Token('paren', 'open', line, col))
         elif char == ')':
             tokens.append(Token('paren', 'close', line, col))
+        elif char == '[':
+            tokens.append(Token('square-paren', 'open'))
+        elif char == ']':
+            tokens.append(Token('square-paren', 'close'))
         elif WHITESPACE_RE.search(char):
             pass
         elif char == '0':
@@ -102,3 +115,5 @@ def tokenize(source: str) -> List[Token]:
         col += 1
     # tokens.append(Token('EOF', None))
     return tokens
+
+

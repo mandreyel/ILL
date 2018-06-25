@@ -69,3 +69,12 @@ class FnCallExpr(Expr):
 
     def __repr__(self) -> str:
         return f"FnCall(fn: {self.fn} args: {self.args})"
+
+class VectorExpr(Expr):
+    def __init__(self, exprs: List[Expr], line: int=None, col: int=None):
+        super().__init__(line, col)
+        self.exprs = exprs
+
+    def __repr__(self) -> str:
+        return f"Vector({self.exprs})"
+

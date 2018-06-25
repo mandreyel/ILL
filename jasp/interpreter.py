@@ -94,6 +94,8 @@ def interpret_expr(expr: Expr, env: Env=global_env):
         return interpret_fn_def(expr, env)
     elif isinstance(expr, FnCallExpr):
         return interpret_fn_call(expr, env)
+    elif isinstance(expr, VectorExpr):
+        return interpret_vector(expr, env)
     else:
         raise TypeError("unknown type")
 
@@ -152,3 +154,6 @@ def interpret_fn_call(expr: FnCallExpr, env: Env):
         return fn(env, *args)
     else:
         return fn(*args)
+
+def interpret_vector(expr: VectorExpr, env: Env) -> list:
+    return [interpret_expr(expr, env) for expr in expr.exprs]
