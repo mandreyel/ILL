@@ -144,14 +144,13 @@ def parse_fn_def_expr(tokens: List[Token]) -> FnDefExpr:
     terminate_expr(tokens)
 
     # Function body
-    body_exprs = []
     if expr_end(tokens):
         raise syntax_error("function must have a function body", keywd)
-    body_exprs.append(parse_expr(tokens))
+    body = parse_expr(tokens)
 
     # Make sure the function definition is terminated.
     terminate_expr(tokens)
-    return FnDefExpr(name.value, params, body_exprs, keywd.line, keywd.col)
+    return FnDefExpr(name.value, params, body, keywd.line, keywd.col)
 
 def parse_fn_call_expr(tokens: List[Token]) -> FnCallExpr:
     """Function call: (fn-identifier args...)"""

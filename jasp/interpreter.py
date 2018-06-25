@@ -82,7 +82,6 @@ def interpret(ast: List[Expr]):
 
 def interpret_expr(expr: Expr, env: Env=global_env):
     # print('[i] curr expr:', expr)
-    # TODO possibly use the visitor pattern here
     if isinstance(expr, AtomExpr):
         return interpret_atom(expr, env)
     elif isinstance(expr, RefExpr):
@@ -135,12 +134,7 @@ class Function:
             # print("[fn] defining:", name, arg)
             self.env.define(name, arg)
         # Evaluate the function body.
-        # assert self.body
-        # for expr in self.body[:-1]:
-            # interpret_expr(expr, self.env)
-        # Interpret the last expression separately as the value of the last
-        # expresssion is returned.
-        return interpret_expr(self.body[-1], self.env)
+        return interpret_expr(self.body, self.env)
 
 def interpret_fn_def(expr: FnDefExpr, env: Env):
     """Function definition: (fn identifier (params...) expr)"""

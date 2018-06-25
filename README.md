@@ -1,13 +1,13 @@
 # JASP - Just Another Shitty Lisp
 
 This is a small toy LISP dialect I've written for purely (self) educational purposes. It's not meant to be a language used
-in the wild--heck, it's written in Python, an interpreter inside an interpreter, performance must be pretty abysmal!
+in the wild--heck, it's written in Python! An interpreter inside an interpreter, performance must be pretty abysmal!
 
 ## The language
 
 I'd lie if I claimed that I'm an expert at LISPS and its numerous dialects, so it's probably safest for me the say that
 JASP is not a real LISP. It currently doesn't even support macros (and perhaps it never will as I never really
-understood or used them (in that order)), nor tail call optimization and a whole host of builtin functions! But hey, it's
+understood or used them (in that order)), tail call optimization, nor a whole host of builtin functions! But hey, it's
 a work-in-progress.
 
 ## Whirlwind tour of the language

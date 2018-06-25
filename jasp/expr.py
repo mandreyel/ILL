@@ -51,7 +51,7 @@ class LetExpr(Expr):
         return f"Let(name: {self.name} value: {self.value})"
 
 class FnDefExpr(Expr):
-    def __init__(self, name: str, params: List[str], body: List[Expr], line:
+    def __init__(self, name: str, params: List[str], body: Expr, line:
             int=None, col: int=None):
         super().__init__(line, col)
         self.name = name
