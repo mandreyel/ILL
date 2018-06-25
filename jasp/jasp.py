@@ -22,10 +22,10 @@ if __name__ == "__main__":
             except (TypeError,SyntaxError) as e:
                 print("ERROR:", e)
                 sys.exit(2)
+            interpreter.interpret(ast)
             try:
-                interpreter.interpret(ast)
+                pass
             except Exception as e:
                 print("ERROR:", e)
     except (KeyboardInterrupt, EOFError):
         print()
-    print("Bye!")

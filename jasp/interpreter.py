@@ -84,20 +84,22 @@ def interpret_expr(expr: Expr, env: Env=global_env):
     # print('[i] curr expr:', expr)
     if isinstance(expr, AtomExpr):
         return interpret_atom(expr, env)
-    elif isinstance(expr, RefExpr):
-        return interpret_ref(expr, env)
-    elif isinstance(expr, IfExpr):
-        return interpret_if(expr, env)
-    elif isinstance(expr, LetExpr):
-        return interpret_let(expr, env)
-    elif isinstance(expr, FnDefExpr):
-        return interpret_fn_def(expr, env)
-    elif isinstance(expr, FnCallExpr):
-        return interpret_fn_call(expr, env)
     elif isinstance(expr, VectorExpr):
         return interpret_vector(expr, env)
     elif isinstance(expr, MapExpr):
         return interpret_map(expr, env)
+    elif isinstance(expr, LetExpr):
+        return interpret_let(expr, env)
+    elif isinstance(expr, RefExpr):
+        return interpret_ref(expr, env)
+    elif isinstance(expr, IfExpr):
+        return interpret_if(expr, env)
+    elif isinstance(expr, WhileExpr):
+        return interpret_while(expr, env)
+    elif isinstance(expr, FnDefExpr):
+        return interpret_fn_def(expr, env)
+    elif isinstance(expr, FnCallExpr):
+        return interpret_fn_call(expr, env)
     else:
         raise TypeError("unknown type")
 
@@ -116,6 +118,17 @@ def interpret_if(expr: IfExpr, env: Env):
         return interpret_expr(expr.true_branch, env)
     elif expr.false_branch:
         return interpret_expr(expr.false_branch, env)
+
+def interpret_while(expr: WhileExpr, env: Env):
+    ret = None
+    while True:
+        cond = interpret_expr(expr.cond, env)
+        if not isinstance(cond, bool):
+            raise TypeError("loop condition must evaluate to a boolean value")
+        if not cond:
+            break
+        ret = interpret_expr(expr.body, env)
+    return ret
 
 def interpret_let(expr: LetExpr, env: Env):
     """Variable binding: (let name expr)"""

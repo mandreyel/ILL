@@ -18,7 +18,9 @@ class AtomExpr(Expr):
     def __repr__(self) -> str:
         return f"Atom({self.value})"
 
-class VectorExpr(Expr):
+class CollectionExpr(Expr): pass
+
+class VectorExpr(CollectionExpr):
     def __init__(self, exprs: List[Expr], line: int=None, col: int=None):
         super().__init__(line, col)
         self.exprs = exprs
@@ -26,13 +28,22 @@ class VectorExpr(Expr):
     def __repr__(self) -> str:
         return f"Vector({self.exprs})"
 
-class MapExpr(Expr):
+class MapExpr(CollectionExpr):
     def __init__(self, expr_dict: Dict[Expr, Expr], line: int=None, col: int=None):
         super().__init__(line, col)
         self.expr_dict = expr_dict
 
     def __repr__(self) -> str:
         return f"Map({self.expr_dict})"
+
+class LetExpr(Expr):
+    def __init__(self, name: str, value: Expr, line: int=None, col: int=None):
+        super().__init__(line, col)
+        self.name = name
+        self.value = value
+
+    def __repr__(self) -> str:
+        return f"Let(name: {self.name} value: {self.value})"
 
 class RefExpr(Expr):
     """An expression that references a variable."""
@@ -57,14 +68,24 @@ class IfExpr(Expr):
         else:
             return f"If(cond: {self.cond} then: {self.true_branch})"
 
-class LetExpr(Expr):
-    def __init__(self, name: str, value: Expr, line: int=None, col: int=None):
+class WhileExpr(Expr):
+    def __init__(self, cond: Expr, body: Expr, line: int=None, col: int=None):
         super().__init__(line, col)
-        self.name = name
-        self.value = value
+        self.cond = cond
+        self.body = body
 
     def __repr__(self) -> str:
-        return f"Let(name: {self.name} value: {self.value})"
+        return f"While(cond: {self.cond} body: {self.body})"
+
+class EachExpr(Expr):
+    def __init__(self, coll: CollectionExpr, elem_name: str, body: Expr, line: int=None, col: int=None):
+        super().__init__(line, col)
+        self.coll = coll
+        self.elem_name = elem_name
+        self.body = body
+
+    def __repr__(self) -> str:
+        return f"Each(coll: {self.coll} elem: {self.elem_name} body: {self.body})"
 
 class FnDefExpr(Expr):
     def __init__(self, name: str, params: List[str], body: Expr, line:

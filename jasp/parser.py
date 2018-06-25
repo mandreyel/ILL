@@ -56,6 +56,8 @@ def parse_expr(tokens: List[Token]) -> Expr:
                     return parse_let_expr(tokens)
                 elif token.value == 'if':
                     return parse_if_expr(tokens)
+                elif token.value == 'while':
+                    return parse_while_expr(tokens)
                 elif token.value == 'fn':
                     return parse_fn_def_expr(tokens)
                 else:
@@ -81,26 +83,6 @@ def parse_expr(tokens: List[Token]) -> Expr:
 
 ###############################################################################
 
-def parse_if_expr(tokens: List[Token]) -> IfExpr:
-    """If "expression": (if cond-expr true-branch-expr false-branch-expr)"""
-    assert tokens
-    # Consume 'if' keyword.
-    keywd = tokens.pop(0)
-    if expr_end(tokens):
-        raise syntax_error("if expression must have a condition and at least a true branch", keywd)
-    cond = parse_expr(tokens)
-    if expr_end(tokens):
-        raise syntax_error("if expression must have a true branch", keywd)
-    true_branch = parse_expr(tokens)
-    false_branch = None
-    # A false (else) branch is optional so only parse it if the next token is
-    # not a closing paren.
-    if tokens[0] != CLOSE_PAREN:
-        false_branch = parse_expr(tokens)
-    # Make sure the if expression is terminated.
-    terminate_expr(tokens)
-    return IfExpr(cond, true_branch, false_branch, keywd.line, keywd.col)
-
 def parse_let_expr(tokens: List[Token]) -> LetExpr:
     """Variable binding: (let name expr)"""
     assert tokens
@@ -117,6 +99,43 @@ def parse_let_expr(tokens: List[Token]) -> LetExpr:
     # Make sure let expression is properly terminated.
     terminate_expr(tokens)
     return LetExpr(name.value, value, keywd.line, keywd.col)
+
+def parse_if_expr(tokens: List[Token]) -> IfExpr:
+    """If "expression": (if cond-expr true-branch-expr false-branch-expr)"""
+    assert tokens
+    # Consume 'if' keyword.
+    keywd = tokens.pop(0)
+    if expr_end(tokens):
+        raise syntax_error("if expression must have a condition and at least a true branch", keywd)
+    cond = parse_expr(tokens)
+    if expr_end(tokens):
+        raise syntax_error("if expression must have a true branch", keywd)
+    elif not can_eval_to_bool(cond):
+        raise syntax_error("if expression condition must evaluate to a boolean value", cond)
+    true_branch = parse_expr(tokens)
+    false_branch = None
+    # A false (else) branch is optional so only parse it if the next token is
+    # not a closing paren.
+    if tokens[0] != CLOSE_PAREN:
+        false_branch = parse_expr(tokens)
+    # Make sure the if expression is terminated.
+    terminate_expr(tokens)
+    return IfExpr(cond, true_branch, false_branch, keywd.line, keywd.col)
+
+def parse_while_expr(tokens: List[Token]) -> WhileExpr:
+    assert tokens
+    # Consume 'while' keyword.
+    keywd = tokens.pop(0)
+    if expr_end(tokens):
+        raise syntax_error("while expression must have a condition and a body", keywd)
+    cond = parse_expr(tokens)
+    if expr_end(tokens):
+        raise syntax_error("while expression must have a body", keywd)
+    elif not can_eval_to_bool(cond):
+        raise syntax_error("while expression condition must evaluate to a boolean value", cond)
+    body = parse_expr(tokens)
+    terminate_expr(tokens)
+    return WhileExpr(cond, body, keywd.line, keywd.col)
 
 def parse_fn_def_expr(tokens: List[Token]) -> FnDefExpr:
     """
@@ -178,6 +197,7 @@ def parse_fn_call_expr(tokens: List[Token]) -> FnCallExpr:
     return FnCallExpr(fn_expr, args, line, col)
 
 def parse_vector_expr(tokens: List[Token]) -> VectorExpr:
+    assert tokens
     exprs = []
     line, col = tokens[0].line, tokens[0].col
     CLOSE_SQUARE_PAREN = Token('square-paren', 'close')
@@ -187,6 +207,7 @@ def parse_vector_expr(tokens: List[Token]) -> VectorExpr:
     return VectorExpr(exprs, line, col)
 
 def parse_map_expr(tokens: List[Token]) -> MapExpr:
+    assert tokens
     exprs = {}
     line, col = tokens[0].line, tokens[0].col
     CLOSE_BRACKET = Token('bracket', 'close')
@@ -204,6 +225,9 @@ def parse_map_expr(tokens: List[Token]) -> MapExpr:
     return MapExpr(exprs, line, col)
 
 ###############################################################################
+
+def can_eval_to_bool(expr: Expr) -> bool:
+    return isinstance(expr, (AtomExpr, FnCallExpr, LetExpr, RefExpr))
 
 def expr_end(tokens, expr_terminator=CLOSE_PAREN) -> bool:
     return not tokens or tokens[0] == expr_terminator

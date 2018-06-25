@@ -47,6 +47,22 @@ Function definition:
         (fib (- n 1) (- n 2))))
 ```
 
+You can loop with recursion, but since tail call optimization is not yet implemented (and I prefer explicit loop
+constructs anyway), a while keyword is provided:
+```
+(let i 0)
+(while (< i 10)
+    (do (print i)
+        (+ i 1)))
+```
+
+Looping through collection elements is also supported:
+```
+(let list [1 2 3 4 5])
+(each (list element)
+    (print element))
+```
+
 You can also use multiple statements within if branches and function bodies with the `do` function, which evaluates all
 its arguments and returns the last one:
 ```
@@ -55,6 +71,12 @@ its arguments and returns the last one:
         (+ tmp param1)))
 ```
 
+Since everything is an expression and thus evaluates to a value, you can use function definitions within expressions
+as anonymus functions, like so:
+```
+((fn adder (a b) (+ a b)) 3 4)
+```
+
 ## Running it
 
-Just execute `./jasp/repl.py` for a repl and `./jasp/jasp.py` to run source code.
+Just execute `./jasp/repl.py` for a repl and `./jasp/jasp.py $filename` to run source code.
