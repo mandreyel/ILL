@@ -129,7 +129,7 @@ def parse_fn_def_expr(tokens: List[Token]) -> FnDefExpr:
     open_paren = tokens.pop(0)
     if open_paren != OPEN_PAREN:
         raise syntax_error("missing function parameter list", open_paren)
-    if expr_end(tokens):
+    if not tokens:
         raise syntax_error("function definition must have a parameter list (may be empty)", open_paren)
     if CLOSE_PAREN not in tokens:
         raise syntax_error("unterminated function parameter list", open_paren)
