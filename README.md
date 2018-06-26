@@ -1,12 +1,10 @@
-# JASP - Just Another Shitty Lisp
-
-Pardon my French.
+# ILL - I LIKE LISPS
 
 This is a small toy LISP dialect I've written for purely (self) educational purposes. It's not meant to be a language used
 in the wild--heck, it's written in Python! An interpreter inside an interpreter, performance must be pretty abysmal!
 
 I'd lie if I claimed that I'm an expert at LISPS and its numerous dialects, so it's probably safest for me the say that
-JASP is not a real LISP. It currently doesn't even support macros (and perhaps it never will as I never really
+ILL is not a real LISP (hence the name). It currently doesn't even support macros (and perhaps it never will as I never really
 understood or used them (in that order)), tail call optimization, nor a whole host of builtin functions! But hey, it's
 a work-in-progress.
 
@@ -91,5 +89,5 @@ as anonymus functions, like so:
 
 ## Running it
 
-Just execute `./jasp/repl.py` for the repl and `./jasp/jasp.py $filename` to run source code. Yes, it's not very
+Just execute `./ill/repl.py` for the repl and `./ill/ill.py $filename` to run source code. Yes, it's not very
 ergonomic. Yet.

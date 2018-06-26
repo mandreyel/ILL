@@ -3,8 +3,7 @@ from expr import *
 from token import Token, CLOSE_PAREN, OPEN_PAREN
 
 def parse(tokens: List[Token]) -> List[Expr]:
-    parser = Parser(tokens)
-    return parser.parse()
+    return Parser(tokens).parse()
 
 ###############################################################################
 

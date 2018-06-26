@@ -4,15 +4,18 @@ import tokenizer
 import parser
 import interpreter
 
+NAME = 'ILL'
+PROMPT = 'I♥L'
+
 if __name__ == "__main__":
-    print("jasp version 0.0.1 (alpha)")
+    print(f"{NAME} version 0.0.1 (alpha)")
     print("Press CTRL+C or CTRL+D or type q or quit to exit.")
     print("-------------------------------------------------")
 
     try:
         history = []
         while True:
-            s = input("jasp> ")
+            s = input(f"{PROMPT}> ")
             if 'q' in s or "quit" in s:
                 break
             history.append(s)
