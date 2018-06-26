@@ -1,9 +1,9 @@
 # JASP - Just Another Shitty Lisp
 
+Pardon my French.
+
 This is a small toy LISP dialect I've written for purely (self) educational purposes. It's not meant to be a language used
 in the wild--heck, it's written in Python! An interpreter inside an interpreter, performance must be pretty abysmal!
-
-## The language
 
 I'd lie if I claimed that I'm an expert at LISPS and its numerous dialects, so it's probably safest for me the say that
 JASP is not a real LISP. It currently doesn't even support macros (and perhaps it never will as I never really
@@ -45,6 +45,10 @@ Function definition:
     (if (<= n 2)
         1
         (fib (- n 1) (- n 2))))
+
+(fn greeter () "hello!")
+
+(fn adder (a b) (+ a b))
 ```
 
 You can loop with recursion, but since tail call optimization is not yet implemented (and I prefer explicit loop
@@ -87,4 +91,5 @@ as anonymus functions, like so:
 
 ## Running it
 
-Just execute `./jasp/repl.py` for a repl and `./jasp/jasp.py $filename` to run source code.
+Just execute `./jasp/repl.py` for the repl and `./jasp/jasp.py $filename` to run source code. Yes, it's not very
+ergonomic. Yet.
