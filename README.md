@@ -91,3 +91,5 @@ as anonymus functions, like so:
 
 Just execute `./ill/repl.py` for the repl and `./ill/ill.py $filename` to run source code. Yes, it's not very
 ergonomic. Yet.
+
+## Useful things that have been built with ILL:
